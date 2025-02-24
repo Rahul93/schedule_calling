@@ -1,0 +1,48 @@
+2025-02-24 14:28:44,439 - ERROR - Invalid phone number format at line 1: phone_numbers
+2025-02-24 14:30:06,840 - ERROR - Invalid phone number format at line 1: phone_numbers
+2025-02-24 14:31:36,527 - ERROR - Invalid phone number format at line 1: phone_numbers
+2025-02-24 14:31:49,893 - ERROR - Invalid phone number format at line 1: phone_numbers
+2025-02-24 14:32:10,743 - ERROR - Invalid phone number format at line 1: phone_numbers
+2025-02-24 14:34:43,033 - ERROR - Invalid phone number format at line 2: 1-901-650-5924
+2025-02-24 14:36:37,855 - ERROR - Error processing call schedule: fromisoformat: argument must be str
+2025-02-24 14:40:56,808 - ERROR - Error processing call schedule: strptime() argument 1 must be str, not datetime.datetime
+2025-02-24 14:41:18,611 - ERROR - Error processing call schedule: strptime() argument 1 must be str, not datetime.datetime
+2025-02-24 14:43:33,051 - INFO - Reading phone numbers from input.csv
+2025-02-24 14:43:33,052 - INFO - Found 200 phone numbers to process
+2025-02-24 14:43:33,052 - INFO - Calculating optimal schedule...
+2025-02-24 14:43:33,052 - ERROR - Error processing call schedule: fromisoformat: argument must be str
+2025-02-24 14:44:17,433 - INFO - Reading phone numbers from input.csv
+2025-02-24 14:44:17,434 - INFO - Found 200 phone numbers to process
+2025-02-24 14:44:17,434 - INFO - Calculating optimal schedule...
+2025-02-24 14:44:17,434 - ERROR - Error processing call schedule: Invalid phone number format: 1-901-650-5924
+2025-02-24 14:44:42,380 - INFO - Reading phone numbers from input.csv
+2025-02-24 14:44:42,380 - INFO - Found 200 phone numbers to process
+2025-02-24 14:44:42,380 - INFO - Calculating optimal schedule...
+2025-02-24 14:45:08,007 - INFO - Reading phone numbers from input.csv
+2025-02-24 14:45:08,007 - INFO - Found 200 phone numbers to process
+2025-02-24 14:45:08,007 - INFO - Calculating optimal schedule...
+2025-02-24 14:45:08,054 - ERROR - Error processing call schedule: 'Etc/Unknown'
+2025-02-24 14:47:45,860 - ERROR - Error validating input file: name 'parsed_number' is not defined
+2025-02-24 14:47:59,603 - ERROR - Error validating input file: name 'parsed_number' is not defined
+2025-02-24 14:48:18,843 - ERROR - Invalid phone number at line 3: 1-910-079-4844
+2025-02-24 14:48:47,657 - ERROR - Invalid phone number at line 3: 1-910-079-4844
+2025-02-24 14:50:19,792 - ERROR - Invalid phone number at line 3: 1-910-079-4844
+2025-02-24 14:56:23,627 - ERROR - Invalid phone number at line 3: 1-910-079-4844
+2025-02-24 15:04:02,330 - ERROR - Error validating input file: name 'phone_number' is not defined
+2025-02-24 15:04:02,331 - ERROR - No valid phone numbers found. Exiting...
+2025-02-24 15:06:04,833 - ERROR - Error validating input file: name 'phone_number' is not defined
+2025-02-24 15:06:04,834 - ERROR - No valid phone numbers found. Exiting...
+2025-02-24 15:06:23,835 - ERROR - Error validating input file: name 'phone_number' is not defined
+2025-02-24 15:06:23,836 - ERROR - No valid phone numbers found. Exiting...
+2025-02-24 15:07:34,590 - ERROR - Unexpected error in run(): type object 'datetime.datetime' has no attribute 'datetime'
+2025-02-24 15:08:05,368 - ERROR - Unexpected error in run(): strptime() argument 1 must be str, not datetime.datetime
+2025-02-24 15:09:48,010 - ERROR - Error processing call schedule: 'datetime.time' object has no attribute 'astimezone'
+2025-02-24 15:13:21,437 - ERROR - Error processing call schedule: isinstance() arg 2 must be a type or tuple of types
+2025-02-24 15:17:37,962 - ERROR - Error processing call schedule: unsupported operand type(s) for -: 'datetime.datetime' and 'datetime.time'
+2025-02-24 15:20:43,674 - ERROR - Error processing call schedule: unsupported operand type(s) for -: 'datetime.datetime' and 'datetime.time'
+2025-02-24 15:23:13,329 - ERROR - Error processing call schedule: isinstance() arg 2 must be a type or tuple of types
+2025-02-24 15:23:54,531 - ERROR - Error processing call schedule: isinstance() arg 2 must be a type or tuple of types
+2025-02-24 15:24:00,483 - ERROR - Error processing call schedule: isinstance() arg 2 must be a type or tuple of types
+2025-02-24 15:24:12,230 - ERROR - Error processing call schedule: isinstance() arg 2 must be a type or tuple of types
+2025-02-24 15:24:43,268 - ERROR - Error processing call schedule: start_time must be a datetime.datetime object, not datetime.time
+2025-02-24 15:27:13,175 - ERROR - Error processing call schedule: can't subtract offset-naive and offset-aware datetimes
