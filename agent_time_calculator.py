@@ -110,11 +110,9 @@ class OptimizedCallScheduler:
         return earliest_start, latest_end
 
     def find_optimal_schedule(self, phone_numbers: List[str], start_time: datetime.time, call_duration: int = 3) -> CallMetrics:
-        """Finds the optimal call schedule using a min-heap for prioritization."""
-
         reference_date = datetime.utcnow().date()
         current_time = datetime.combine(reference_date, start_time).replace(tzinfo=pytz.UTC)
-        original_start_time = current_time  # Store the original start time
+        original_start_time = current_time
         total_call_time = 0
         total_wait_time = 0
 
@@ -123,60 +121,25 @@ class OptimizedCallScheduler:
         logging.debug(f"Total calls to process: {remaining_calls}")
 
         priority_queue = []
-        last_call_end_time = current_time  # Track when the last call ended
-        day_counter = 0  # Track days for debugging
+        last_call_end_time = current_time
+        day_counter = 0
 
-        # First, check if we can make any calls at the current time
+        # Initial population of priority queue
         for timezones, calls in timezone_groups.items():
             window_start, window_end = self.get_callable_window(timezones, current_time)
             if window_start is not None and window_end is not None:
-                # Only add to queue if there's a valid window and window_start is close to current time
-                if (window_start - current_time).total_seconds() / 60 < 60:  # Within an hour
-                    time_remaining = int((window_end - max(current_time, window_start)).total_seconds() / 60)
-                    if time_remaining > 0:
-                        heapq.heappush(priority_queue, (time_remaining, timezones, calls))
-
-        # If no valid windows at start time, find the nearest valid window
-        if not priority_queue:
-            earliest_window_start = None
-            earliest_timezones = None
-            earliest_calls = None
-
-            for timezones, calls in timezone_groups.items():
-                window_start, window_end = self.get_callable_window(timezones, current_time)
-                if window_start is not None:
-                    if earliest_window_start is None or window_start < earliest_window_start:
-                        earliest_window_start = window_start
-                        earliest_timezones = timezones
-                        earliest_calls = calls
-
-            if earliest_window_start is not None:
-                # Calculate initial wait time to the earliest window
-                initial_wait = int((earliest_window_start - current_time).total_seconds() / 60)
-                if initial_wait > 0:
-                    total_wait_time += initial_wait
-                    logging.debug(f"Initial wait time: {initial_wait} minutes until {earliest_window_start}")
-                    current_time = earliest_window_start
-
-                # Add the earliest window to the queue
-                window_start, window_end = self.get_callable_window(earliest_timezones, current_time)
-                if window_start is not None and window_end is not None:
-                    time_remaining = int((window_end - current_time).total_seconds() / 60)
-                    heapq.heappush(priority_queue, (time_remaining, earliest_timezones, earliest_calls))
+                time_remaining = int((window_end - max(current_time, window_start)).total_seconds() / 60)
+                if time_remaining > 0:
+                    heapq.heappush(priority_queue, (time_remaining, timezones, calls))
 
         while remaining_calls > 0:
             if not priority_queue:
-                # No more valid windows today, move to next day at 9am
+                # Move to next day at 9 AM
                 day_counter += 1
                 old_time = current_time
                 current_time = (current_time.replace(hour=0, minute=0, second=0) + timedelta(days=1)).replace(hour=self.start_hour)
 
-                # Add wait time for overnight period
-                overnight_wait = int((current_time - old_time).total_seconds() / 60)
-                total_wait_time += overnight_wait
-                logging.debug(f"Day {day_counter}: Overnight wait: {overnight_wait} minutes")
-
-                # Find all windows for the new day
+                # Check for remaining calls
                 for timezones, calls in timezone_groups.items():
                     unprocessed = [call for call in calls if not call.processed]
                     if unprocessed:
@@ -185,21 +148,25 @@ class OptimizedCallScheduler:
                             time_remaining = int((window_end - max(current_time, window_start)).total_seconds() / 60)
                             if time_remaining > 0:
                                 heapq.heappush(priority_queue, (time_remaining, timezones, unprocessed))
+
+                # Add overnight wait time
+                if not priority_queue:
+                    overnight_wait = int((current_time - old_time).total_seconds() / 60)
+                    total_wait_time += overnight_wait
+                    logging.debug(f"Day {day_counter}: Overnight wait: {overnight_wait} minutes")
                 continue
 
-            # Get the group with the shortest time window
+            # Process the highest-priority group
             time_remaining, timezones, calls = heapq.heappop(priority_queue)
             unprocessed = [call for call in calls if not call.processed]
 
             if not unprocessed:
-                continue  # Skip if all calls in this group are processed
+                continue
 
-            # Get the current valid window
             window_start, window_end = self.get_callable_window(timezones, current_time)
             if window_start is None or window_end is None:
                 continue
 
-            # Handle wait time if current_time is before window_start
             if current_time < window_start:
                 wait_time = int((window_start - current_time).total_seconds() / 60)
                 if wait_time > 0:
@@ -207,24 +174,9 @@ class OptimizedCallScheduler:
                     logging.debug(f"Waiting {wait_time} minutes for window to open")
                     current_time = window_start
 
-            # Calculate how many calls we can make in this window
             window_duration = int((window_end - current_time).total_seconds() / 60)
             possible_calls = min(len(unprocessed), window_duration // call_duration)
 
-            if possible_calls <= 0:
-                # Window too small for even one call, find next window
-                next_time = current_time + timedelta(minutes=60)  # Look ahead one hour
-                window_start, window_end = self.get_callable_window(timezones, next_time)
-                if window_start is not None and window_end is not None:
-                    wait_time = int((window_start - current_time).total_seconds() / 60)
-                    if wait_time > 0:
-                        total_wait_time += wait_time
-                        current_time = window_start
-                    time_remaining = int((window_end - window_start).total_seconds() / 60)
-                    heapq.heappush(priority_queue, (time_remaining, timezones, unprocessed))
-                continue
-
-            # Process calls
             for i in range(possible_calls):
                 if i >= len(unprocessed):
                     break
@@ -236,41 +188,19 @@ class OptimizedCallScheduler:
                 remaining_calls -= 1
                 last_call_end_time = current_time
 
-                if remaining_calls % 10 == 0:
-                    logging.debug(f"Processed call {remaining_calls} remaining, current time: {current_time}")
-
-            # Check for remaining unprocessed calls in this group
-            still_unprocessed = [call for call in calls if not call.processed]
-            if still_unprocessed:
-                # Find next valid window for these calls
-                next_window_start, next_window_end = self.get_callable_window(timezones, current_time)
-                if next_window_start is not None and next_window_end is not None:
-                    # If gap between current time and next window, add to priority queue with new window
-                    time_remaining = int((next_window_end - max(current_time, next_window_start)).total_seconds() / 60)
-                    if time_remaining > 0:
-                        heapq.heappush(priority_queue, (time_remaining, timezones, still_unprocessed))
-
-            # Check if we need to update other groups in the queue
-            # This ensures we're always working with fresh window calculations
+            # Update priority queue
             updated_queue = []
-            while priority_queue:
-                item = heapq.heappop(priority_queue)
-                old_time, item_timezones, item_calls = item
+            for _, item_timezones, item_calls in priority_queue:
                 unprocessed_item_calls = [call for call in item_calls if not call.processed]
-
                 if unprocessed_item_calls:
                     window_start, window_end = self.get_callable_window(item_timezones, current_time)
                     if window_start is not None and window_end is not None:
-                        new_time = int((window_end - max(current_time, window_start)).total_seconds() / 60)
-                        if new_time > 0:
-                            heapq.heappush(updated_queue, (new_time, item_timezones, unprocessed_item_calls))
-
+                        time_remaining = int((window_end - max(current_time, window_start)).total_seconds() / 60)
+                        if time_remaining > 0:
+                            heapq.heappush(updated_queue, (time_remaining, item_timezones, unprocessed_item_calls))
             priority_queue = updated_queue
 
-        # Calculate actual work time (from original start to last call end)
         total_elapsed = int((last_call_end_time - original_start_time).total_seconds() / 60)
-
-        # Log final statistics
         logging.debug(f"Total call time: {total_call_time} minutes")
         logging.debug(f"Total wait time: {total_wait_time} minutes")
         logging.debug(f"Total elapsed time: {total_elapsed} minutes")
@@ -370,10 +300,10 @@ class CallSchedulerApp:
                         if phonenumbers.is_valid_number(parsed_number):
                             valid_phone_numbers.append(phone_number)  # Add only valid numbers
                         else:
-                            print(f"⚠️ WARNING: Invalid phone number at line {i}, skipping: {phone_number}")
+                            print(f"WARNING: Invalid phone number at line {i}, skipping: {phone_number}")
 
                     except phonenumbers.NumberParseException:
-                        print(f"⚠️ WARNING: Invalid phone number format at line {i}, skipping: {phone_number}")
+                        print(f"WARNING: Invalid phone number format at line {i}, skipping: {phone_number}")
 
             return valid_phone_numbers
         except Exception as e:
